@@ -1,0 +1,19 @@
+{
+  "build": {
+    "cpu": "cortex-m4",
+    "f_cpu": "168000000L",
+	"extra_flags": "-DSTM32F407ZE", 
+    "mcu": "stm32f407zet6"
+  },
+  "frameworks": [
+    "mbed",
+    "arduino"
+  ],
+  "name": "Black F407ZE",
+  "upload": {
+    "maximum_ram_size": 196608,
+    "maximum_size": 1048768
+  },
+  "url": "",
+  "vendor": ""
+}
