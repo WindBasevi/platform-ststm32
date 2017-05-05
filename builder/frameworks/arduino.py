@@ -69,6 +69,7 @@ def stm32generic():
     env = DefaultEnvironment()
     platform = env.PioPlatform()
     board = env.BoardConfig()
+
     FRAMEWORK_DIR = join(platform.get_package_dir(
         "framework-arduinoSTM32GENERIC"), "STM32")
     FRAMEWORK_VERSION = platform.get_package_version("framework-arduinoSTM32GENERIC")
@@ -76,16 +77,16 @@ def stm32generic():
 
     #print FRAMEWORK_DIR;
 
-    mcuseries=board.get('build.mcu')[:7].upper();
-    mcudefine=board.get('build.mcu')[:11].upper();
+    mcuseries=board.get('build.mcu')[:7].upper();  #i.e. STM32F4
+    mcudefine=board.get('build.mcu')[:11].upper(); #i.e. STM32F407VG
     boardi=env.get("BOARD");
 
     #map ststm32 board name to stm32generic variant folder for compiling etc.
-
     var_folder=getVariantFromBoard(boardi)
     print boardi+" --> " + var_folder;
 
-    print "var_folder="+var_folder;
+    #print "var_folder="+var_folder;
+
     #enable FPU for F4 in building and linking
     if mcuseries=="STM32F4":
         print "is F4"
@@ -95,7 +96,7 @@ def stm32generic():
             "-mfloat-abi=hard"
             ],
     		LINKFLAGS=[
-    		"-Wl,--start-group",
+    		#"-Wl,--start-group",
     		"-mfloat-abi=hard",
     		"-mfpu=fpv4-sp-d16",
     		"-Wl,--entry=Reset_Handler",
@@ -104,27 +105,39 @@ def stm32generic():
     )
 
     #empty LIBPATH, use our own ldscript
-    env["LIBPATH"]= [];
+    #env["LIBPATH"]= [];
 
 
     env.Append(
-        CCFLAGS=[
-            "--param", "max-inline-insns-single=500",
-    		"-fno-exceptions",
+        CXXFLAGS=[
+            "-fno-exceptions",
     		"-fno-rtti",
     		"-std=gnu++11",
-    		"-fno-threadsafe-statics",
+            "-fno-threadsafe-statics",
+            "-w",
+            ("-x","c++"),
+            "-CC",
+        ],
+        CFLAGS=[
+            "-std=gnu11",
+            "-MMD"
+        ],
+        CCFLAGS=[
+            "--param", "max-inline-insns-single=500",
     		"-ffunction-sections",
     		"-fdata-sections",
     		"-mthumb",
-    		"--specs=nano.specs"
+    		"--specs=nano.specs",
+            "-nostdlib"
+
         ],
         CPPDEFINES=[
             ("ARDUINO", 10810),
     		mcuseries,
             mcudefine,
             "ARDUINO_ARCH_STM32",
-    		("HSE_VALUE", 8000000)
+    		("HSE_VALUE", 8000000),
+            ("printf","iprintf")
         ],
 
         CPPPATH=[
@@ -133,11 +146,16 @@ def stm32generic():
     		join(FRAMEWORK_DIR, "cores", "arduino","usb"),
     		join(FRAMEWORK_DIR, "system", "CMSIS"),
     		join(FRAMEWORK_DIR, "system", mcuseries, "CMSIS_Inc"),
+            join(FRAMEWORK_DIR, "system", mcuseries, "CMSIS_Src"),
     		join(FRAMEWORK_DIR, "system", mcuseries, "HAL_Inc"),
+            join(FRAMEWORK_DIR, "system", mcuseries, "HAL_Src"),
+            join(FRAMEWORK_DIR, "system", mcuseries, "stm32_chip"),
 
             join(FRAMEWORK_DIR, "variants", var_folder),
 
-    		join(FRAMEWORK_DIR, "system", mcuseries, "HAL_Src"),
+
+            #join(FRAMEWORK_DIR, "cores", "arduino", "stm32_HAL"),
+
         ],
 
         LIBPATH=[
@@ -146,12 +164,26 @@ def stm32generic():
         ]
     )
 
-    env['LDSCRIPT_PATH'] = join(FRAMEWORK_DIR, "variants", var_folder)+"\ldscript.ld";
-    env.ProcessFlags(board.get("build.extra_flags"))
+    #env['LDSCRIPT_PATH'] = join(FRAMEWORK_DIR, "variants", var_folder)+"\ldscript.ld";
+    env['LDSCRIPT_PATH'] = "ldscript.ld";
+    #env.ProcessFlags(board.get("build.extra_flags"))
+    #pdb.set_trace();
 
-    for item in ("-nostartfiles","-nostdlib"):
-        if item in env['LINKFLAGS']:
-            env['LINKFLAGS'].remove(item)
+
+    #src_filter = ["+<*.[sS]>", "+<*.c*>"]
+    #src_filter = ["+<**.[sS]>"]
+    #env.BuildSources( join("$BUILD_DIR", ""), join(FRAMEWORK_DIR, "cores", "arduino", "stm32_HAL"), src_filter=src_filter)
+    #system_stm32f4xx
+
+
+    #src_filter = ["+<*.c>"]
+    #env.BuildSources( join("$BUILD_DIR", ""), join(FRAMEWORK_DIR, "cores", "arduino", "stm32"), src_filter=src_filter)
+
+
+    #src_filter = ["+<*system*.[cC]>"]
+    #env.BuildSources( join("$BUILD_DIR", ""), join(FRAMEWORK_DIR, "cores", "arduino", "stm32_HAL"), src_filter=src_filter)
+
+    pdb.set_trace();
 
     if env.subst("$UPLOAD_PROTOCOL") == "dfu":
         if board.id in ("maple", "maple_mini_origin"):
@@ -182,26 +214,33 @@ def stm32generic():
 
     libs = []
 
-    if "build.variant" in board:
-        env.Append(
-            CPPPATH=[
-                join(FRAMEWORK_DIR, "variants",
-                     board.get("build.variant"))
-            ]
+    for item in ("-nostartfiles","-nostdlib"):
+        if item in env['LINKFLAGS']:
+            env['LINKFLAGS'].remove(item)
+
+    for item in ("stdc++","nosys"):
+        if item in env['LIBS']:
+            env['LIBS'].remove(item)
+
+
+    #if "build.variant" in board:
+    #    env.Append(
+    #        CPPPATH=[
+    #            join(FRAMEWORK_DIR, "variants",
+    #                 var_folder)
+    #        ]
+    #    )
+
+    libs.append(env.BuildSources(
+        join("$BUILD_DIR", "core"),
+        join(FRAMEWORK_DIR, "cores", "arduino"))
         )
 
+    libs.append(env.BuildSources(
+        join("$BUILD_DIR", "variants", var_folder),
+        join(FRAMEWORK_DIR, "variants", var_folder)) )
 
-        libs.append(env.BuildLibrary(
-            join("$BUILD_DIR", "FrameworkArduinoVariant"),
-            join(FRAMEWORK_DIR, "variants", board.get("build.variant"))
-        ))
-
-    libs.append(env.BuildLibrary(
-        join("$BUILD_DIR", "FrameworkArduino"),
-        join(FRAMEWORK_DIR, "cores", board.get("build.core"))
-    ))
-
-    env.Prepend(LIBS=libs)
+    #env.Prepend(LIBS=libs)
 
 
 def stm32duino():
