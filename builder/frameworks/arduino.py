@@ -30,9 +30,9 @@ import pdb
 
 env = DefaultEnvironment()
 
-print env.get("CPPDEFINES")
+#print env.get("CPPDEFINES")
 
-#try to get variant folder from board name
+#resolve variant folder from board name
 def getVariantFromBoard(boardi):
     var_folder="";
 
@@ -40,7 +40,10 @@ def getVariantFromBoard(boardi):
         "bluepill_f103c8":"BLUEPILL",
         "genericSTM32F103CB":"BLUEPILL",
         "genericSTM32F103C8":"BLUEPILL",
-        "maple_mini_b20":"MAPLE_MINI"
+        "maple_mini_b20":"MAPLE_MINI",
+        "black_F407VE":"BLACK_F407VE",
+        "black_F407ZE":"BLACK_F407ZE",
+        "black_F407ZG":"BLACK_F407ZG"
     }
 
     #check board from mappings
@@ -57,13 +60,12 @@ def getVariantFromBoard(boardi):
         a=boardi.split("_")
         var_folder="NUCLEO"+a[1].upper()
 
-
     if var_folder=="":
         print "ERROR: could not get variant folder from board: "+boardi
-
+		#TODO: should assert here ?
     return var_folder;
 
-#HAL MX based Arduino
+#HAL MX based Arduino build
 def stm32generic():
     print "stm32generic()"
     env = DefaultEnvironment()
@@ -75,8 +77,7 @@ def stm32generic():
     FRAMEWORK_VERSION = platform.get_package_version("framework-arduinoSTM32GENERIC")
     assert isdir(FRAMEWORK_DIR)
 
-    #print FRAMEWORK_DIR;
-
+    #resolve some defines based on board's json file
     mcuseries=board.get('build.mcu')[:7].upper();  #i.e. STM32F4
     mcudefine=board.get('build.mcu')[:11].upper(); #i.e. STM32F407VG
     boardi=env.get("BOARD");
@@ -88,26 +89,26 @@ def stm32generic():
     #print "var_folder="+var_folder;
 
     #enable FPU for F4 in building and linking
+	#this could be moved into genera
     if mcuseries=="STM32F4":
-        print "is F4"
+        #print "board is F4"
         env.Append(
         CCFLAGS=[
             "-mfpu=fpv4-sp-d16",
             "-mfloat-abi=hard"
             ],
-    		LINKFLAGS=[
-    		#"-Wl,--start-group",
-    		"-mfloat-abi=hard",
-    		"-mfpu=fpv4-sp-d16",
-    		"-Wl,--entry=Reset_Handler",
-    		"--specs=nano.specs"
-    		],
+		LINKFLAGS=[
+			"-mfloat-abi=hard",
+			"-mfpu=fpv4-sp-d16",
+			"-Wl,--entry=Reset_Handler",
+			"--specs=nano.specs"
+		],
     )
 
-    #empty LIBPATH, use our own ldscript
-    #env["LIBPATH"]= [];
-
-
+	#
+	#flags and defines copied from platform.txt
+	#also could be possible to read from actual file and parse them here
+	#
     env.Append(
         CXXFLAGS=[
             "-fno-exceptions",
@@ -152,39 +153,21 @@ def stm32generic():
             join(FRAMEWORK_DIR, "system", mcuseries, "stm32_chip"),
 
             join(FRAMEWORK_DIR, "variants", var_folder),
-
-
-            #join(FRAMEWORK_DIR, "cores", "arduino", "stm32_HAL"),
-
         ],
 
+        #for ldscript.ld
         LIBPATH=[
             join(FRAMEWORK_DIR, "variants",
                  var_folder)
         ]
     )
-
-    #env['LDSCRIPT_PATH'] = join(FRAMEWORK_DIR, "variants", var_folder)+"\ldscript.ld";
+   
     env['LDSCRIPT_PATH'] = "ldscript.ld";
-    #env.ProcessFlags(board.get("build.extra_flags"))
-    #pdb.set_trace();
 
-
-    #src_filter = ["+<*.[sS]>", "+<*.c*>"]
-    #src_filter = ["+<**.[sS]>"]
-    #env.BuildSources( join("$BUILD_DIR", ""), join(FRAMEWORK_DIR, "cores", "arduino", "stm32_HAL"), src_filter=src_filter)
-    #system_stm32f4xx
-
-
-    #src_filter = ["+<*.c>"]
-    #env.BuildSources( join("$BUILD_DIR", ""), join(FRAMEWORK_DIR, "cores", "arduino", "stm32"), src_filter=src_filter)
-
-
-    #src_filter = ["+<*system*.[cC]>"]
-    #env.BuildSources( join("$BUILD_DIR", ""), join(FRAMEWORK_DIR, "cores", "arduino", "stm32_HAL"), src_filter=src_filter)
-
-    pdb.set_trace();
-
+	#
+	# upload handling copied from stm32duino, probably not relevant for this package
+	# copied here for reference, may be better to remove in the future
+	#
     if env.subst("$UPLOAD_PROTOCOL") == "dfu":
         if board.id in ("maple", "maple_mini_origin"):
             env.Append(CPPDEFINES=[("VECT_TAB_ADDR", 0x8005000), "SERIAL_USB"])
@@ -208,10 +191,10 @@ def stm32generic():
       ]
     )
 
-    #
-    # Target: Build Core Library
-    #
-
+	#
+	# remove unrelevant flags for linking, they originate from build.py which sets defaults
+	# for all frameworks: mbed, etc.
+	#
     libs = []
 
     for item in ("-nostartfiles","-nostdlib"):
@@ -222,15 +205,9 @@ def stm32generic():
         if item in env['LIBS']:
             env['LIBS'].remove(item)
 
-
-    #if "build.variant" in board:
-    #    env.Append(
-    #        CPPPATH=[
-    #            join(FRAMEWORK_DIR, "variants",
-    #                 var_folder)
-    #        ]
-    #    )
-
+	#
+    # Target: Build Core Library
+    #
     libs.append(env.BuildSources(
         join("$BUILD_DIR", "core"),
         join(FRAMEWORK_DIR, "cores", "arduino"))
