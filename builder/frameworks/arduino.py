@@ -24,7 +24,7 @@ http://www.stm32duino.com
 
 from os.path import isdir, join
 
-from SCons.Script import DefaultEnvironment
+from SCons.Script import COMMAND_LINE_TARGETS, DefaultEnvironment
 
 import pdb
 
@@ -62,7 +62,7 @@ def getVariantFromBoard(boardi):
 
     if var_folder=="":
         print "ERROR: could not get variant folder from board: "+boardi
-		#TODO: should assert here ?
+        #TODO: should assert here ?
     return var_folder;
 
 #HAL MX based Arduino build
@@ -89,7 +89,7 @@ def stm32generic():
     #print "var_folder="+var_folder;
 
     #enable FPU for F4 in building and linking
-	#this could be moved into genera
+    #this could be moved into genera
     if mcuseries=="STM32F4":
         #print "board is F4"
         env.Append(
@@ -97,23 +97,23 @@ def stm32generic():
             "-mfpu=fpv4-sp-d16",
             "-mfloat-abi=hard"
             ],
-		LINKFLAGS=[
-			"-mfloat-abi=hard",
-			"-mfpu=fpv4-sp-d16",
-			"-Wl,--entry=Reset_Handler",
-			"--specs=nano.specs"
-		],
+        LINKFLAGS=[
+            "-mfloat-abi=hard",
+            "-mfpu=fpv4-sp-d16",
+            "-Wl,--entry=Reset_Handler",
+            "--specs=nano.specs"
+        ],
     )
 
-	#
-	#flags and defines copied from platform.txt
-	#also could be possible to read from actual file and parse them here
-	#
+    #
+    #flags and defines copied from platform.txt
+    #also could be possible to read from actual file and parse them here
+    #
     env.Append(
         CXXFLAGS=[
             "-fno-exceptions",
-    		"-fno-rtti",
-    		"-std=gnu++11",
+            "-fno-rtti",
+            "-std=gnu++11",
             "-fno-threadsafe-statics",
             "-w",
             ("-x","c++"),
@@ -125,30 +125,30 @@ def stm32generic():
         ],
         CCFLAGS=[
             "--param", "max-inline-insns-single=500",
-    		"-ffunction-sections",
-    		"-fdata-sections",
-    		"-mthumb",
-    		"--specs=nano.specs",
+            "-ffunction-sections",
+            "-fdata-sections",
+            "-mthumb",
+            "--specs=nano.specs",
             "-nostdlib"
 
         ],
         CPPDEFINES=[
             ("ARDUINO", 10810),
-    		mcuseries,
+            mcuseries,
             mcudefine,
             "ARDUINO_ARCH_STM32",
-    		("HSE_VALUE", 8000000),
+            ("HSE_VALUE", 8000000),
             ("printf","iprintf")
         ],
 
         CPPPATH=[
-    		join(FRAMEWORK_DIR, "cores", "arduino","stm32"),
-    		join(FRAMEWORK_DIR, "cores", "arduino"),
-    		join(FRAMEWORK_DIR, "cores", "arduino","usb"),
-    		join(FRAMEWORK_DIR, "system", "CMSIS"),
-    		join(FRAMEWORK_DIR, "system", mcuseries, "CMSIS_Inc"),
+            join(FRAMEWORK_DIR, "cores", "arduino","stm32"),
+            join(FRAMEWORK_DIR, "cores", "arduino"),
+            join(FRAMEWORK_DIR, "cores", "arduino","usb"),
+            join(FRAMEWORK_DIR, "system", "CMSIS"),
+            join(FRAMEWORK_DIR, "system", mcuseries, "CMSIS_Inc"),
             join(FRAMEWORK_DIR, "system", mcuseries, "CMSIS_Src"),
-    		join(FRAMEWORK_DIR, "system", mcuseries, "HAL_Inc"),
+            join(FRAMEWORK_DIR, "system", mcuseries, "HAL_Inc"),
             join(FRAMEWORK_DIR, "system", mcuseries, "HAL_Src"),
             join(FRAMEWORK_DIR, "system", mcuseries, "stm32_chip"),
 
@@ -164,10 +164,10 @@ def stm32generic():
    
     env['LDSCRIPT_PATH'] = "ldscript.ld";
 
-	#
-	# upload handling copied from stm32duino, probably not relevant for this package
-	# copied here for reference, may be better to remove in the future
-	#
+    #
+    # upload handling copied from stm32duino, probably not relevant for this package
+    # copied here for reference, may be better to remove in the future
+    #
     if env.subst("$UPLOAD_PROTOCOL") == "dfu":
         if board.id in ("maple", "maple_mini_origin"):
             env.Append(CPPDEFINES=[("VECT_TAB_ADDR", 0x8005000), "SERIAL_USB"])
@@ -191,10 +191,10 @@ def stm32generic():
       ]
     )
 
-	#
-	# remove unrelevant flags for linking, they originate from build.py which sets defaults
-	# for all frameworks: mbed, etc.
-	#
+    #
+    # remove unrelevant flags for linking, they originate from build.py which sets defaults
+    # for all frameworks: mbed, etc.
+    #
     libs = []
 
     for item in ("-nostartfiles","-nostdlib"):
@@ -205,7 +205,7 @@ def stm32generic():
         if item in env['LIBS']:
             env['LIBS'].remove(item)
 
-	#
+    #
     # Target: Build Core Library
     #
     libs.append(env.BuildSources(
