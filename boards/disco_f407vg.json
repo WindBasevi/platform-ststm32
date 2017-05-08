@@ -12,7 +12,8 @@
     "mbed",
     "cmsis",
     "spl",
-    "libopencm3"
+    "libopencm3",
+    "arduino"
   ],
   "name": "ST STM32F4DISCOVERY",
   "upload": {

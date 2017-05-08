@@ -11,7 +11,8 @@
   "frameworks": [
     "mbed",
     "cmsis",
-    "spl"
+    "spl",
+    "arduino"
   ],
   "name": "ST Nucleo F401RE",
   "upload": {

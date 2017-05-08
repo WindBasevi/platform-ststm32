@@ -9,7 +9,8 @@
   },
   "frameworks": [
     "mbed",
-    "libopencm3"
+    "libopencm3",
+    "arduino"
   ],
   "name": "ST Nucleo F103RB",
   "upload": {

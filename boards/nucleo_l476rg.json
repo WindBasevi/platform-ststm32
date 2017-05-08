@@ -5,7 +5,8 @@
     "mcu": "stm32l476rgt6"
   },
   "frameworks": [
-    "mbed"
+    "mbed",
+    "arduino"
   ],
   "name": "ST Nucleo L476RG",
   "upload": {

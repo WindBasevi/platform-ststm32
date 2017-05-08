@@ -5,7 +5,8 @@
     "mcu": "stm32l053c8t6"
   },
   "frameworks": [
-    "mbed"
+    "mbed",
+    "arduino"
   ],
   "name": "ST 32L0538DISCOVERY",
   "upload": {

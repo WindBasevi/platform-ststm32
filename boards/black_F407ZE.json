@@ -5,14 +5,13 @@
 	"extra_flags": "-DSTM32F407ZE", 
     "mcu": "stm32f407zet6"
   },
-  "frameworks": [
-    "mbed",
+  "frameworks": [    
     "arduino"
   ],
   "name": "Black F407ZE",
   "upload": {
     "maximum_ram_size": 196608,
-    "maximum_size": 1048768
+    "maximum_size": 1048576
   },
   "url": "",
   "vendor": ""

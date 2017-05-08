@@ -5,7 +5,8 @@
     "mcu": "stm32l053r8t6"
   },
   "frameworks": [
-    "mbed"
+    "mbed",
+    "arduino"
   ],
   "name": "ST Nucleo L053R8",
   "upload": {

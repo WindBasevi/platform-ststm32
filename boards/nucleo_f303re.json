@@ -5,7 +5,8 @@
     "mcu": "stm32f303ret6"
   },
   "frameworks": [
-    "mbed"
+    "mbed",
+    "arduino"
   ],
   "name": "ST Nucleo F303RE",
   "upload": {
