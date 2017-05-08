@@ -58,11 +58,12 @@ def getVariantFromBoard(boardi):
     #convert nucleo boards
     if boardi[:6].upper()=="NUCLEO":
         a=boardi.split("_")
-        var_folder="NUCLEO"+a[1].upper()
+        var_folder="NUCLEO_"+a[1].upper()
 
     if var_folder=="":
         print "ERROR: could not get variant folder from board: "+boardi
-        #TODO: should assert here ?
+        
+    assert(var_folder!="")   
     return var_folder;
 
 #HAL MX based Arduino build
